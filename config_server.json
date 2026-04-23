@@ -1,0 +1,97 @@
+{
+  "log": {
+    "loglevel": "warning",
+    "error": "/var/log/xray/error.log"
+  },
+  "dns": {
+    "servers": [
+      "https+local://1.1.1.1/dns-query",
+      "https+local://94.140.14.14/dns-query"
+    ],
+    "queryStrategy": "UseIPv4"
+  },
+  "api": {
+    "tag": "api",
+    "listen": "0.0.0.0:10085",
+    "services": [
+      "HandlerService",
+      "StatsService"
+    ]
+  },
+  "inbounds": [
+    {
+      "tag": "vless-in",
+      "port": 443,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "fd0bf5ae-a6a4-4d6f-87a9-3794ec30ba9e"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+          "show": true,
+          "dest": "learn.microsoft.com:443",
+          "xver": 0,
+          "serverNames": ["learn.microsoft.com"],
+          "privateKey": "0ADS9yP_JQBP0_qrXzx9bxsVoeY8ByNrB9FlL2n7KHA",
+          "shortIds": ["29d5b4c37ab9ae47"],
+          "maxTimeDiff": 60000
+        },
+        "xhttpSettings": {
+	  "host": "learn.microsoft.com"
+          "path": "/api/telemetry/report",
+          "mode": "packet-up",
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls", "quic"],
+        "metadataOnly": true,
+        "routeOnly": true
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "direct",
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIPv4"
+      }
+    },
+    {
+      "tag": "block",
+      "protocol": "blackhole"
+    },
+    {
+      "tag": "dns-out",
+      "protocol": "dns"
+    }
+  ],
+  "routing": {
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      {
+        "type": "field",
+        "port": 53,
+        "outboundTag": "dns-out"
+      },
+      {
+        "type": "field",
+        "ip": ["geoip:private"],
+        "outboundTag": "block"
+      },
+      {
+	"type": "field",
+        "protocol": ["bittorrent"],
+	"outboundTag": "block"
+      }
+    ]
+  }
+}
